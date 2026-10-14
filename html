@@ -320,7 +320,7 @@ select option { background: var(--surface2); }
   </style>
 </head>
 <body>
-<div id="page-setup" class="view-page">
+<div id="page-setup" class="view-page active">
   <div class="setup-container">
     <div class="setup-logo">🎓</div>
     <div class="setup-title">반 / 학기 맞춤 설정</div>
@@ -570,8 +570,13 @@ window.submitSetup = async function() {
   localStorage.setItem("activeSubjects", JSON.stringify(activeSubjects));
   localStorage.setItem("userClassConfig", JSON.stringify({ grade, sClass, term }));
 
-  // Firestore 메타 정보 동기화
-  await syncSubjectsToFirestore();
+  // Firestore 연결이 실패해도 화면 진입은 계속 진행
+  try {
+    await syncSubjectsToFirestore();
+  } catch (e) {
+    console.error("과목 동기화 실패:", e);
+    setStatus(false);
+  }
   initDashboard();
 };
 
@@ -979,7 +984,13 @@ window.addEventListener('DOMContentLoaded', () => {
   
   const hasConfig = localStorage.getItem("userClassConfig");
   if (hasConfig) {
-    initDashboard();
+    try {
+      initDashboard();
+    } catch (e) {
+      console.error("화면 초기화 실패:", e);
+      showPage("page-setup");
+      alert("화면 초기화 중 문제가 발생했습니다. 학급 설정을 다시 선택해 주세요.");
+    }
   } else {
     showPage("page-setup");
   }
